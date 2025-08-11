@@ -12,9 +12,11 @@ import FinancialReportsModal from './FinancialReportsModal';
 import BackupModal from './BackupModal';
 import BulletinTemplatesModal from './BulletinTemplatesModal';
 import SchoolManagementModal from './SchoolManagementModal';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 const Settings: React.FC = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const { currentAcademicYear } = useAcademicYear();
 
   const settingsSections = [
     {
@@ -120,7 +122,7 @@ const Settings: React.FC = () => {
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-semibold text-gray-800">Année Scolaire Active</h2>
-              <p className="text-sm sm:text-base text-gray-600">2024-2025 • Du 1er Octobre 2024 au 30 Juin 2025</p>
+              <p className="text-sm sm:text-base text-gray-600">{currentAcademicYear} • Données de l'année en cours uniquement</p>
             </div>
           </div>
           <button 

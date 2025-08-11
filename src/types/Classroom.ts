@@ -22,4 +22,5 @@ export interface ClassInfo {
   subjects: string[];
   classroom?: string;
   schoolId: string; // Nouvelle propriété
+  academicYear: string; // Année scolaire
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Calculator, BookOpen, Users, TrendingUp, CheckCircle, AlertCircle, FileText, Download } from 'lucide-react';
 import BulletinGenerationModal from './BulletinGenerationModal';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 interface CalculateAveragesModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ const CalculateAveragesModal: React.FC<CalculateAveragesModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const { currentAcademicYear } = useAcademicYear();
   const [selectedPeriod, setSelectedPeriod] = useState('Trimestre 1');
   const [selectedClass, setSelectedClass] = useState('all');
   const [calculationStep, setCalculationStep] = useState<'config' | 'calculating' | 'results'>('config');
@@ -257,6 +259,11 @@ const CalculateAveragesModal: React.FC<CalculateAveragesModalProps> = ({
 
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h3 className="font-medium text-blue-800 mb-3">Paramètres de Calcul</h3>
+                <div className="mb-4 p-3 bg-white rounded border">
+                  <p className="text-sm text-blue-700">
+                    <strong>Année scolaire:</strong> {currentAcademicYear}
+                  </p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <label className="flex items-center space-x-2 cursor-pointer">

@@ -20,6 +20,7 @@ import {
   User
 } from 'lucide-react';
 import AddStudentModal from './AddStudentModal';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 interface Student {
   id: string;
@@ -69,6 +70,7 @@ const StudentManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const { currentAcademicYear } = useAcademicYear();
   const [students, setStudents] = useState<Student[]>([
     // ... (vos données d'étudiants restent inchangées)
   ]);
@@ -139,6 +141,7 @@ const StudentManagement: React.FC = () => {
       outstandingAmount: studentData.totalFees - studentData.initialPayment,
       totalFees: studentData.totalFees,
       paidAmount: studentData.initialPayment,
+      academicYear: currentAcademicYear,
       lastPayment: studentData.initialPayment > 0 ? new Date().toISOString().split('T')[0] : undefined,
       paymentHistory: studentData.initialPayment > 0 ? [
         {

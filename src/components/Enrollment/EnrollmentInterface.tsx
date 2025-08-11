@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UserPlus, School, Calendar, Users, CheckCircle, AlertCircle, User, BookOpen } from 'lucide-react';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 interface EnrollmentData {
   studentId?: string; // Pour les étudiants existants
@@ -12,7 +13,6 @@ interface EnrollmentData {
   parentEmail: string;
   classId: string;
   className: string;
-  academicYear: string;
   enrollmentDate: string;
   isNewStudent: boolean;
 }
@@ -41,6 +41,7 @@ interface ExistingStudent {
 
 const EnrollmentInterface: React.FC = () => {
   const [step, setStep] = useState<'student' | 'class' | 'confirmation'>('student');
+  const { currentAcademicYear } = useAcademicYear();
   const [enrollmentData, setEnrollmentData] = useState<EnrollmentData>({
     firstName: '',
     lastName: '',
@@ -51,7 +52,6 @@ const EnrollmentInterface: React.FC = () => {
     parentEmail: '',
     classId: '',
     className: '',
-    academicYear: '2024-2025',
     enrollmentDate: new Date().toISOString().split('T')[0],
     isNewStudent: true
   });
@@ -274,7 +274,7 @@ const EnrollmentInterface: React.FC = () => {
       
       // Simulation de l'inscription
       setTimeout(() => {
-        alert(`Inscription réussie ! ${enrollmentData.firstName} ${enrollmentData.lastName} a été inscrit(e) en ${enrollmentData.className} pour l'année ${enrollmentData.academicYear}.`);
+        alert(`Inscription réussie ! ${enrollmentData.firstName} ${enrollmentData.lastName} a été inscrit(e) en ${enrollmentData.className} pour l'année ${currentAcademicYear}.`);
         handleReset();
       }, 1000);
     }
@@ -292,7 +292,6 @@ const EnrollmentInterface: React.FC = () => {
       parentEmail: '',
       classId: '',
       className: '',
-      academicYear: '2024-2025',
       enrollmentDate: new Date().toISOString().split('T')[0],
       isNewStudent: true
     });
@@ -331,7 +330,7 @@ const EnrollmentInterface: React.FC = () => {
         
         <div className="flex items-center space-x-2 text-sm text-gray-500">
           <Calendar className="h-4 w-4" />
-          <span>Année Scolaire: {enrollmentData.academicYear}</span>
+          <span>Année Scolaire: {currentAcademicYear}</span>
         </div>
       </div>
 
@@ -708,7 +707,7 @@ const EnrollmentInterface: React.FC = () => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700">
               <div>
-                <p><strong>Année scolaire:</strong> {enrollmentData.academicYear}</p>
+                <p><strong>Année scolaire:</strong> {currentAcademicYear}</p>
                 <p><strong>Classe:</strong> {enrollmentData.className}</p>
                 <p><strong>Niveau:</strong> {availableClasses.find(c => c.id === enrollmentData.classId)?.level}</p>
               </div>
@@ -827,7 +826,7 @@ const EnrollmentInterface: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Année Active</p>
-              <p className="text-lg font-bold text-gray-800">2024-2025</p>
+              <p className="text-lg font-bold text-gray-800">{currentAcademicYear}</p>
             </div>
           </div>
         </div>

@@ -2,8 +2,10 @@ import React from 'react';
 import { Menu, Bell, User, Search } from 'lucide-react';
 import UserMenu from './UserMenu';
 import SchoolSelector from './SchoolSelector';
+import AcademicYearSelector from './AcademicYearSelector';
 import { useAuth } from '../Auth/AuthProvider';
 import { useSchool } from '../../contexts/SchoolContext';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -13,6 +15,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isMobile }) => {
   const { user } = useAuth();
   const { currentSchool } = useSchool();
+  const { currentAcademicYear, availableYears, setCurrentAcademicYear } = useAcademicYear();
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
@@ -42,10 +45,9 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isMobile }) => {
           </div>
 
           {/* Year Selector */}
-          <select className="hidden md:block px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option>Année {currentSchool?.settings.academicYear || '2024-2025'}</option>
-            <option>Année 2023-2024</option>
-          </select>
+          <div className="hidden md:block">
+            <AcademicYearSelector />
+          </div>
 
           {/* Mobile Search Button */}
           <button className="sm:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">

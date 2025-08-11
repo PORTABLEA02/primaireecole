@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { X, Calendar, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
+import { archiveCurrentYearData } from '../../utils/dataFilters';
+import { useSchool } from '../../contexts/SchoolContext';
 
 interface AcademicYearModalProps {
   isOpen: boolean;
@@ -34,8 +37,10 @@ const AcademicYearModal: React.FC<AcademicYearModalProps> = ({
   onClose,
   onSave
 }) => {
+  const { currentAcademicYear, availableYears, addAcademicYear, setCurrentAcademicYear } = useAcademicYear();
+  const { currentSchool } = useSchool();
   const [formData, setFormData] = useState<AcademicYearData>({
-    name: '2024-2025',
+    name: currentAcademicYear,
     startDate: '2024-10-01',
     endDate: '2025-06-30',
     isActive: true,
@@ -80,6 +85,21 @@ const AcademicYearModal: React.FC<AcademicYearModalProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const handleCreateNewYear = () => {
+    if (currentSchool) {
+      // Archiver les données de l'année courante
+      archiveCurrentYearData(currentSchool.id, currentAcademicYear);
+      
+      // Ajouter la nouvelle année
+      addAcademicYear(formData.name);
+      
+      // Définir comme année courante
+      setCurrentAcademicYear(formData.name);
+      
+      alert(`Nouvelle année scolaire ${formData.name} créée et activée. Les données de ${currentAcademicYear} ont été archivées.`);
+    }
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -102,6 +122,10 @@ const AcademicYearModal: React.FC<AcademicYearModalProps> = ({
     if (formData.periods.length === 0) {
       newErrors.periods = 'Au moins une période doit être définie';
     }
+    
+    if (availableYears.includes(formData.name) && formData.name !== currentAcademicYear) {
+      newErrors.name = 'Cette année scolaire existe déjà';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -111,7 +135,13 @@ const AcademicYearModal: React.FC<AcademicYearModalProps> = ({
     e.preventDefault();
     
     if (validateForm()) {
-      onSave(formData);
+      if (formData.name === currentAcademicYear) {
+        // Mise à jour de l'année courante
+        onSave(formData);
+      } else {
+        // Création d'une nouvelle année
+        handleCreateNewYear();
+      }
       onClose();
     }
   };
@@ -206,6 +236,16 @@ const AcademicYearModal: React.FC<AcademicYearModalProps> = ({
           {/* Informations générales */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800">Informations Générales</h3>
+            
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-800 mb-2">Année Scolaire Courante</h4>
+              <p className="text-sm text-blue-700">
+                Actuellement: <strong>{currentAcademicYear}</strong>
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Seules les données de cette année sont visibles dans l'application
+              </p>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>

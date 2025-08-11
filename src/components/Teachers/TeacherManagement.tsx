@@ -19,6 +19,7 @@ import {
   XCircle
 } from 'lucide-react';
 import AddTeacherModal from './AddTeacherModal';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 interface Teacher {
   id: string;
@@ -58,6 +59,7 @@ const TeacherManagement: React.FC = () => {
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [showAddTeacherModal, setShowAddTeacherModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'list' | 'absences' | 'performance'>('list');
+  const { currentAcademicYear } = useAcademicYear();
   const [teachers, setTeachers] = useState<Teacher[]>([
 
     {
@@ -242,6 +244,7 @@ const TeacherManagement: React.FC = () => {
       emergencyContact: teacherData.emergencyContact,
       specializations: teacherData.specializations,
       performanceRating: 4.0 // Note par défaut pour un nouvel enseignant
+      academicYear: currentAcademicYear
     };
     
     setTeachers(prev => [...prev, newTeacher]);

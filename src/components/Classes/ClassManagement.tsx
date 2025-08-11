@@ -5,6 +5,7 @@ import TeacherAssignmentModal from './TeacherAssignmentModal';
 import ClassDetailModal from './ClassDetailModal';
 import ClassScheduleModal from './ClassScheduleModal';
 import ChangeTeacherModal from './ChangeTeacherModal';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 const ClassManagement: React.FC = () => {
   const [showAddModal, setShowAddModal] = React.useState(false);
@@ -13,6 +14,7 @@ const ClassManagement: React.FC = () => {
   const [showScheduleModal, setShowScheduleModal] = React.useState(false);
   const [showChangeTeacherModal, setShowChangeTeacherModal] = React.useState(false);
   const [selectedClass, setSelectedClass] = React.useState<any>(null);
+  const { currentAcademicYear } = useAcademicYear();
   const [classes, setClasses] = React.useState([
     { 
       id: '1',
@@ -138,7 +140,8 @@ const ClassManagement: React.FC = () => {
       teacher: classData.teacherName,
       teacherId: classData.teacherId,
       subjects: classData.subjects,
-      classroom: classData.classroom
+      classroom: classData.classroom,
+      academicYear: currentAcademicYear
     };
     
     setClasses(prev => [...prev, newClass]);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, BookOpen, Save, Users, Calculator, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 interface GradeEntryModalProps {
   isOpen: boolean;
@@ -31,6 +32,8 @@ const GradeEntryModal: React.FC<GradeEntryModalProps> = ({
   selectedSubject,
   selectedPeriod
 }) => {
+  const { currentAcademicYear } = useAcademicYear();
+  
   // Données d'exemple des élèves selon la classe
   const getStudentsForClass = (className: string): Student[] => {
     const baseStudents = {
@@ -136,6 +139,7 @@ const GradeEntryModal: React.FC<GradeEntryModalProps> = ({
       class: selectedClass,
       subject: selectedSubject,
       period: selectedPeriod,
+      academicYear: currentAcademicYear,
       evaluationType,
       evaluationTitle,
       evaluationDate,

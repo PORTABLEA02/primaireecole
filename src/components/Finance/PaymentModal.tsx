@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, DollarSign, User, Calendar, CreditCard, Smartphone, Building, Search, AlertCircle, CheckCircle } from 'lucide-react';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ interface PaymentData {
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onAddPayment }) => {
   const [step, setStep] = useState<'student' | 'payment' | 'confirmation'>('student');
   const [searchTerm, setSearchTerm] = useState('');
+  const { currentAcademicYear } = useAcademicYear();
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [paymentData, setPaymentData] = useState<Partial<PaymentData>>({
     amount: 0,
@@ -199,6 +201,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onAddPayme
       amount: 0,
       method: 'Espèces',
       type: 'Mensualité',
+      academicYear: currentAcademicYear,
       date: new Date().toISOString().split('T')[0]
     });
     setSearchTerm('');

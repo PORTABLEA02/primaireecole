@@ -1,37 +1,40 @@
 import { useState, useEffect } from 'react';
 import { useSchool } from '../contexts/SchoolContext';
+import { useAcademicYear } from '../contexts/AcademicYearContext';
 import { Teacher } from '../types/User';
 import { Student } from '../types/User';
 import { ClassInfo } from '../types/Classroom';
 
 export const useSchoolData = () => {
   const { currentSchool } = useSchool();
+  const { currentAcademicYear } = useAcademicYear();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<ClassInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (currentSchool) {
-      loadSchoolData(currentSchool.id);
+    if (currentSchool && currentAcademicYear) {
+      loadSchoolData(currentSchool.id, currentAcademicYear);
     }
-  }, [currentSchool]);
+  }, [currentSchool, currentAcademicYear]);
 
-  const loadSchoolData = async (schoolId: string) => {
+  const loadSchoolData = async (schoolId: string, academicYear: string) => {
     setIsLoading(true);
     
     try {
-      // Charger les données spécifiques à l'école depuis le localStorage
-      const savedTeachers = localStorage.getItem(`teachers_${schoolId}`);
-      const savedStudents = localStorage.getItem(`students_${schoolId}`);
-      const savedClasses = localStorage.getItem(`classes_${schoolId}`);
+      // Charger les données spécifiques à l'école ET à l'année scolaire
+      const dataKey = `${schoolId}_${academicYear}`;
+      const savedTeachers = localStorage.getItem(`teachers_${dataKey}`);
+      const savedStudents = localStorage.getItem(`students_${dataKey}`);
+      const savedClasses = localStorage.getItem(`classes_${dataKey}`);
 
       if (savedTeachers) {
         setTeachers(JSON.parse(savedTeachers));
       } else {
         // Données par défaut pour la première école
-        if (schoolId === 'ecole-1') {
-          setTeachers(getDefaultTeachers(schoolId));
+        if (schoolId === 'ecole-1' && academicYear === '2024-2025') {
+          setTeachers(getDefaultTeachers(schoolId, academicYear));
         } else {
           setTeachers([]);
         }
@@ -46,8 +49,8 @@ export const useSchoolData = () => {
       if (savedClasses) {
         setClasses(JSON.parse(savedClasses));
       } else {
-        if (schoolId === 'ecole-1') {
-          setClasses(getDefaultClasses(schoolId));
+        if (schoolId === 'ecole-1' && academicYear === '2024-2025') {
+          setClasses(getDefaultClasses(schoolId, academicYear));
         } else {
           setClasses([]);
         }
@@ -60,23 +63,26 @@ export const useSchoolData = () => {
   };
 
   const saveTeachers = (newTeachers: Teacher[]) => {
-    if (currentSchool) {
+    if (currentSchool && currentAcademicYear) {
       setTeachers(newTeachers);
-      localStorage.setItem(`teachers_${currentSchool.id}`, JSON.stringify(newTeachers));
+      const dataKey = `${currentSchool.id}_${currentAcademicYear}`;
+      localStorage.setItem(`teachers_${dataKey}`, JSON.stringify(newTeachers));
     }
   };
 
   const saveStudents = (newStudents: Student[]) => {
-    if (currentSchool) {
+    if (currentSchool && currentAcademicYear) {
       setStudents(newStudents);
-      localStorage.setItem(`students_${currentSchool.id}`, JSON.stringify(newStudents));
+      const dataKey = `${currentSchool.id}_${currentAcademicYear}`;
+      localStorage.setItem(`students_${dataKey}`, JSON.stringify(newStudents));
     }
   };
 
   const saveClasses = (newClasses: ClassInfo[]) => {
-    if (currentSchool) {
+    if (currentSchool && currentAcademicYear) {
       setClasses(newClasses);
-      localStorage.setItem(`classes_${currentSchool.id}`, JSON.stringify(newClasses));
+      const dataKey = `${currentSchool.id}_${currentAcademicYear}`;
+      localStorage.setItem(`classes_${dataKey}`, JSON.stringify(newClasses));
     }
   };
 
@@ -88,12 +94,13 @@ export const useSchoolData = () => {
     saveTeachers,
     saveStudents,
     saveClasses,
-    currentSchool
+    currentSchool,
+    currentAcademicYear
   };
 };
 
 // Données par défaut pour la première école
-const getDefaultTeachers = (schoolId: string): Teacher[] => [
+const getDefaultTeachers = (schoolId: string, academicYear: string): Teacher[] => [
   {
     id: '1',
     firstName: 'Moussa',
@@ -111,11 +118,12 @@ const getDefaultTeachers = (schoolId: string): Teacher[] => [
     emergencyContact: '+223 65 44 33 22',
     specializations: ['Mathématiques', 'Sciences'],
     performanceRating: 4.5,
-    schoolId
+    schoolId,
+    academicYear
   }
 ];
 
-const getDefaultClasses = (schoolId: string): ClassInfo[] => [
+const getDefaultClasses = (schoolId: string, academicYear: string): ClassInfo[] => [
   {
     id: '1',
     name: 'Maternelle 1A',
@@ -125,7 +133,8 @@ const getDefaultClasses = (schoolId: string): ClassInfo[] => [
     teacher: 'Mme Kone',
     teacherId: 'kone',
     subjects: ['Éveil', 'Langage', 'Graphisme', 'Jeux éducatifs'],
-    schoolId
+    schoolId,
+    academicYear
   },
   {
     id: '2',
@@ -136,6 +145,7 @@ const getDefaultClasses = (schoolId: string): ClassInfo[] => [
     teacher: 'M. Traore',
     teacherId: 'traore',
     subjects: ['Français', 'Mathématiques', 'Éveil Scientifique', 'Éducation Civique'],
-    schoolId
+    schoolId,
+    academicYear
   }
 ];

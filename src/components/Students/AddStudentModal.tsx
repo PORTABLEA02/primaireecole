@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, User, Users, Phone, Mail, MapPin, Calendar, DollarSign, BookOpen, AlertCircle } from 'lucide-react';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 interface AddStudentModalProps {
   isOpen: boolean;
@@ -51,6 +52,7 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({
   onAddStudent
 }) => {
   const [step, setStep] = useState<'student' | 'parent' | 'financial' | 'confirmation'>('student');
+  const { currentAcademicYear } = useAcademicYear();
   const [formData, setFormData] = useState<NewStudentData>({
     firstName: '',
     lastName: '',
@@ -967,6 +969,7 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({
                     <p><strong>Langue maternelle:</strong> {formData.motherTongue}</p>
                     <p><strong>Classe:</strong> {formData.class} ({formData.level})</p>
                     <p><strong>Date d'inscription:</strong> {new Date(formData.enrollmentDate).toLocaleDateString('fr-FR')}</p>
+                    <p><strong>Année scolaire:</strong> {currentAcademicYear}</p>
                     <p><strong>Transport:</strong> {formData.transportMode}</p>
                     {formData.numberOfSiblings > 0 && (
                       <p><strong>Frères/Sœurs:</strong> {formData.numberOfSiblings}</p>

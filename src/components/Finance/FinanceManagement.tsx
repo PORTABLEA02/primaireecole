@@ -2,6 +2,7 @@ import React from 'react';
 import { useState } from 'react';
 import { DollarSign, TrendingUp, AlertCircle, CreditCard, Smartphone, Building } from 'lucide-react';
 import PaymentModal from './PaymentModal';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 interface Payment {
   id: string;
@@ -17,6 +18,7 @@ interface Payment {
 
 const FinanceManagement: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const { currentAcademicYear } = useAcademicYear();
   const [recentPayments, setRecentPayments] = useState<Payment[]>([
     {
       id: '1',
@@ -69,7 +71,8 @@ const FinanceManagement: React.FC = () => {
       date: 'Maintenant',
       status: 'Confirmé',
       type: paymentData.type,
-      month: paymentData.month
+      month: paymentData.month,
+      academicYear: currentAcademicYear
     };
     
     setRecentPayments(prev => [newPayment, ...prev]);

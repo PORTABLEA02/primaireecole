@@ -2,11 +2,13 @@ import React from 'react';
 import { BookOpen, FileText, Calculator, Award, TrendingUp } from 'lucide-react';
 import GradeEntryModal from './GradeEntryModal';
 import CalculateAveragesModal from './CalculateAveragesModal';
+import { useAcademicYear } from '../../contexts/AcademicYearContext';
 
 const AcademicManagement: React.FC = () => {
   const [selectedClass, setSelectedClass] = React.useState('');
   const [selectedSubject, setSelectedSubject] = React.useState('');
   const [selectedPeriod, setSelectedPeriod] = React.useState('Trimestre 1');
+  const { currentAcademicYear } = useAcademicYear();
   const [showGradeEntryModal, setShowGradeEntryModal] = React.useState(false);
   const [showCalculateAveragesModal, setShowCalculateAveragesModal] = React.useState(false);
 
@@ -61,7 +63,7 @@ const AcademicManagement: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Gestion Académique</h1>
-          <p className="text-sm sm:text-base text-gray-600">Notes, bulletins, moyennes et suivi pédagogique</p>
+          <p className="text-sm sm:text-base text-gray-600">Notes, bulletins, moyennes et suivi pédagogique - Année {currentAcademicYear}</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">

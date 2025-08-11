@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './components/Auth/AuthProvider';
 import { SchoolProvider } from './contexts/SchoolContext';
+import { AcademicYearProvider } from './contexts/AcademicYearContext';
 import LoginPage from './components/Auth/LoginPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import Sidebar from './components/Layout/Sidebar';
@@ -148,11 +149,13 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <SchoolProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </SchoolProvider>
+    <AcademicYearProvider>
+      <SchoolProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </SchoolProvider>
+    </AcademicYearProvider>
   );
 }
 

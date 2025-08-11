@@ -29,6 +29,7 @@ export interface Teacher {
   specializations: string[];
   performanceRating: number;
   schoolId: string; // Nouvelle propriété
+  academicYear: string; // Année scolaire
 }
 
 export interface Student {
@@ -66,6 +67,7 @@ export interface Student {
   paidAmount: number;
   lastPayment?: string;
   schoolId: string; // Nouvelle propriété
+  academicYear: string; // Année scolaire
   paymentHistory: Array<{
     date: string;
     amount: number;
