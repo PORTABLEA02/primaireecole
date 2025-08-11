@@ -1,16 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User as UserType } from '../../types/User';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'Admin' | 'Directeur' | 'Secrétaire' | 'Enseignant' | 'Comptable';
-  permissions: string[];
-  avatar?: string;
-}
 
 interface AuthContextType {
-  user: User | null;
+  user: UserType | null;
   isAuthenticated: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
   logout: () => void;
@@ -32,38 +25,50 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Utilisateurs de démonstration
-  const users: Record<string, User> = {
+  const users: Record<string, UserType> = {
     'admin@ecoletech.edu': {
       id: '1',
       name: 'Admin Principal',
       email: 'admin@ecoletech.edu',
       role: 'Admin',
-      permissions: ['all']
+      permissions: ['all'],
+      schoolId: 'ecole-1',
+      isActive: true,
+      createdDate: '2024-01-01'
     },
     'directeur@ecoletech.edu': {
       id: '2',
       name: 'Dr. Amadou Sanogo',
       email: 'directeur@ecoletech.edu',
       role: 'Directeur',
-      permissions: ['students', 'teachers', 'academic', 'reports', 'classes']
+      permissions: ['students', 'teachers', 'academic', 'reports', 'classes'],
+      schoolId: 'ecole-1',
+      isActive: true,
+      createdDate: '2024-01-01'
     },
     'secretaire@ecoletech.edu': {
       id: '3',
       name: 'Mme Fatoumata Keita',
       email: 'secretaire@ecoletech.edu',
       role: 'Secrétaire',
-      permissions: ['students', 'classes']
+      permissions: ['students', 'classes'],
+      schoolId: 'ecole-1',
+      isActive: true,
+      createdDate: '2024-01-01'
     },
     'comptable@ecoletech.edu': {
       id: '4',
       name: 'M. Ibrahim Coulibaly',
       email: 'comptable@ecoletech.edu',
       role: 'Comptable',
-      permissions: ['finance', 'reports']
+      permissions: ['finance', 'reports'],
+      schoolId: 'ecole-1',
+      isActive: true,
+      createdDate: '2024-01-01'
     }
   };
 

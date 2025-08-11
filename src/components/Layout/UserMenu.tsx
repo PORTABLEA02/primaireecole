@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { User, LogOut, Settings, Shield, ChevronDown } from 'lucide-react';
 import { useAuth } from '../Auth/AuthProvider';
+import { useSchool } from '../../contexts/SchoolContext';
 
 const UserMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { currentSchool } = useSchool();
 
   const handleLogout = () => {
     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
@@ -62,6 +64,7 @@ const UserMenu: React.FC = () => {
                 <div>
                   <p className="font-medium text-gray-800">{user.name}</p>
                   <p className="text-sm text-gray-500">{user.email}</p>
+                  <p className="text-xs text-gray-400">{currentSchool?.name}</p>
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getRoleColor(user.role)}`}>
                     {user.role}
                   </span>

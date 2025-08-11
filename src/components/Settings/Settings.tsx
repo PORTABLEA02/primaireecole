@@ -11,6 +11,7 @@ import LogsModal from './LogsModal';
 import FinancialReportsModal from './FinancialReportsModal';
 import BackupModal from './BackupModal';
 import BulletinTemplatesModal from './BulletinTemplatesModal';
+import SchoolManagementModal from './SchoolManagementModal';
 
 const Settings: React.FC = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -21,6 +22,7 @@ const Settings: React.FC = () => {
       icon: SettingsIcon,
       color: 'blue',
       settings: [
+        { name: 'Gestion des écoles', action: 'school-management' },
         { name: 'Informations de l\'école', action: 'school-info' },
         { name: 'Année scolaire active', action: 'academic-year' }, 
         { name: 'Périodes et trimestres', action: 'academic-year' },
@@ -273,6 +275,11 @@ const Settings: React.FC = () => {
 
       <BulletinTemplatesModal
         isOpen={activeModal === 'bulletin-templates'}
+        onClose={() => setActiveModal(null)}
+      />
+
+      <SchoolManagementModal
+        isOpen={activeModal === 'school-management'}
         onClose={() => setActiveModal(null)}
       />
     </div>

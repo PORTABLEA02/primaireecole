@@ -13,6 +13,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { useAuth } from '../Auth/AuthProvider';
+import { useSchool } from '../../contexts/SchoolContext';
 
 interface SidebarProps {
   activeModule: string;
@@ -42,6 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   isMobile
 }) => {
   const { user, hasPermission } = useAuth();
+  const { currentSchool } = useSchool();
 
   // Filtrer les éléments du menu selon les permissions
   const filteredMenuItems = menuItems.filter(item => {
@@ -75,8 +77,12 @@ const Sidebar: React.FC<SidebarProps> = ({
               <School className="h-6 w-6 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg font-bold text-gray-800">EcoleTech</h1>
-              <p className="text-xs text-gray-500">Gestion Scolaire</p>
+              <h1 className="text-lg font-bold text-gray-800">
+                {currentSchool?.name.split(' ')[0] || 'EcoleTech'}
+              </h1>
+              <p className="text-xs text-gray-500">
+                {currentSchool?.name || 'Gestion Scolaire'}
+              </p>
             </div>
           </div>
         )}
