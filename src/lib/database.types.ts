@@ -113,6 +113,7 @@ export interface Database {
           attendance_date: string
           class_id: string | null
           created_at: string
+          enrollment_id: string | null
           id: string
           reason: string | null
           recorded_by: string | null
@@ -123,6 +124,7 @@ export interface Database {
           attendance_date?: string
           class_id?: string | null
           created_at?: string
+          enrollment_id?: string | null
           id?: string
           reason?: string | null
           recorded_by?: string | null
@@ -133,6 +135,7 @@ export interface Database {
           attendance_date?: string
           class_id?: string | null
           created_at?: string
+          enrollment_id?: string | null
           id?: string
           reason?: string | null
           recorded_by?: string | null
@@ -147,6 +150,7 @@ export interface Database {
           class_rank: number | null
           conduct_grade: string | null
           decision: string | null
+          enrollment_id: string | null
           general_average: number | null
           generated_at: string
           generated_by: string | null
@@ -163,6 +167,7 @@ export interface Database {
           class_rank?: number | null
           conduct_grade?: string | null
           decision?: string | null
+          enrollment_id?: string | null
           general_average?: number | null
           generated_at?: string
           generated_by?: string | null
@@ -179,6 +184,7 @@ export interface Database {
           class_rank?: number | null
           conduct_grade?: string | null
           decision?: string | null
+          enrollment_id?: string | null
           general_average?: number | null
           generated_at?: string
           generated_by?: string | null
@@ -199,6 +205,7 @@ export interface Database {
           id: string
           level_id: string | null
           name: string
+          school_id: string | null
           status: string | null
           teacher_id: string | null
           updated_at: string
@@ -211,6 +218,7 @@ export interface Database {
           id?: string
           level_id?: string | null
           name: string
+          school_id?: string | null
           status?: string | null
           teacher_id?: string | null
           updated_at?: string
@@ -223,6 +231,7 @@ export interface Database {
           id?: string
           level_id?: string | null
           name?: string
+          school_id?: string | null
           status?: string | null
           teacher_id?: string | null
           updated_at?: string
@@ -338,6 +347,7 @@ export interface Database {
           amount: number
           bank_details: string | null
           created_at: string
+          enrollment_id: string | null
           id: string
           mobile_number: string | null
           notes: string | null
@@ -354,6 +364,7 @@ export interface Database {
           amount: number
           bank_details?: string | null
           created_at?: string
+          enrollment_id?: string | null
           id?: string
           mobile_number?: string | null
           notes?: string | null
@@ -370,6 +381,7 @@ export interface Database {
           amount?: number
           bank_details?: string | null
           created_at?: string
+          enrollment_id?: string | null
           id?: string
           mobile_number?: string | null
           notes?: string | null
@@ -427,6 +439,41 @@ export interface Database {
           updated_at?: string
         }
       }
+      school_teachers: {
+        Row: {
+          contract_type: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          school_id: string | null
+          start_date: string
+          status: string | null
+          teacher_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          contract_type?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          school_id?: string | null
+          start_date: string
+          status?: string | null
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contract_type?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          school_id?: string | null
+          start_date?: string
+          status?: string | null
+          teacher_id?: string | null
+          updated_at?: string
+        }
+      }
       schools: {
         Row: {
           address: string
@@ -471,13 +518,52 @@ export interface Database {
           updated_at?: string
         }
       }
+      student_class_enrollments: {
+        Row: {
+          academic_year_id: string | null
+          class_id: string | null
+          created_at: string
+          enrollment_date: string
+          id: string
+          outstanding_amount: number | null
+          paid_amount: number | null
+          payment_status: string | null
+          status: string | null
+          student_id: string | null
+          total_fees: number
+          updated_at: string
+        }
+        Insert: {
+          academic_year_id?: string | null
+          class_id?: string | null
+          created_at?: string
+          enrollment_date?: string
+          id?: string
+          paid_amount?: number | null
+          status?: string | null
+          student_id?: string | null
+          total_fees?: number
+          updated_at?: string
+        }
+        Update: {
+          academic_year_id?: string | null
+          class_id?: string | null
+          created_at?: string
+          enrollment_date?: string
+          id?: string
+          paid_amount?: number | null
+          status?: string | null
+          student_id?: string | null
+          total_fees?: number
+          updated_at?: string
+        }
+      }
       students: {
         Row: {
           address: string
           allergies: string | null
           birth_place: string
           blood_type: string | null
-          class_id: string | null
           created_at: string
           date_of_birth: string
           emergency_contact_name: string
@@ -499,14 +585,9 @@ export interface Database {
           mother_tongue: string
           nationality: string
           number_of_siblings: number | null
-          outstanding_amount: number | null
-          paid_amount: number | null
           parent_email: string
-          payment_status: string | null
           previous_school: string | null
           religion: string | null
-          status: string | null
-          total_fees: number
           transport_mode: string | null
           updated_at: string
         }
@@ -515,7 +596,6 @@ export interface Database {
           allergies?: string | null
           birth_place: string
           blood_type?: string | null
-          class_id?: string | null
           created_at?: string
           date_of_birth: string
           emergency_contact_name: string
@@ -537,12 +617,9 @@ export interface Database {
           mother_tongue?: string
           nationality?: string
           number_of_siblings?: number | null
-          paid_amount?: number | null
           parent_email: string
           previous_school?: string | null
           religion?: string | null
-          status?: string | null
-          total_fees?: number
           transport_mode?: string | null
           updated_at?: string
         }
@@ -551,7 +628,6 @@ export interface Database {
           allergies?: string | null
           birth_place?: string
           blood_type?: string | null
-          class_id?: string | null
           created_at?: string
           date_of_birth?: string
           emergency_contact_name?: string
@@ -573,12 +649,9 @@ export interface Database {
           mother_tongue?: string
           nationality?: string
           number_of_siblings?: number | null
-          paid_amount?: number | null
           parent_email?: string
           previous_school?: string | null
           religion?: string | null
-          status?: string | null
-          total_fees?: number
           transport_mode?: string | null
           updated_at?: string
         }
@@ -590,6 +663,7 @@ export interface Database {
           description: string | null
           id: string
           name: string
+          school_id: string | null
           updated_at: string
         }
         Insert: {
@@ -598,6 +672,7 @@ export interface Database {
           description?: string | null
           id?: string
           name: string
+          school_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -606,6 +681,7 @@ export interface Database {
           description?: string | null
           id?: string
           name?: string
+          school_id?: string | null
           updated_at?: string
         }
       }
@@ -679,6 +755,7 @@ export interface Database {
           permissions: string[] | null
           phone: string | null
           role: string
+          school_id: string | null
           updated_at: string
           user_id: string
         }
@@ -692,6 +769,7 @@ export interface Database {
           permissions?: string[] | null
           phone?: string | null
           role: string
+          school_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -705,6 +783,7 @@ export interface Database {
           permissions?: string[] | null
           phone?: string | null
           role?: string
+          school_id?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -2,8 +2,10 @@ import { supabase } from '../lib/supabase';
 
 export const dashboardService = {
   // Récupérer les statistiques du tableau de bord
-  async getDashboardStats() {
-    const { data, error } = await supabase.rpc('get_dashboard_stats');
+  async getDashboardStats(schoolId?: string) {
+    const { data, error } = await supabase.rpc('get_dashboard_stats', {
+      school_id: schoolId || null
+    });
     
     if (error) {
       console.error('Erreur lors de la récupération des statistiques:', error);
@@ -58,7 +60,7 @@ export const dashboardService = {
         name,
         classes (
           id,
-          students (id)
+          student_class_enrollments (id)
         )
       `)
       .order('order_number', { ascending: true });
@@ -70,7 +72,7 @@ export const dashboardService = {
 
     return data?.map(level => ({
       level: level.name,
-      students: level.classes?.reduce((sum, cls) => sum + (cls.students?.length || 0), 0) || 0,
+      students: level.classes?.reduce((sum, cls) => sum + (cls.student_class_enrollments?.length || 0), 0) || 0,
       classes: level.classes?.length || 0,
       trend: 'up', // À calculer selon vos besoins
       percentage: Math.random() * 10 // Simulation, à remplacer par un vrai calcul

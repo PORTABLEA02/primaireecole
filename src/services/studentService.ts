@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Student } from '../lib/supabase';
+import type { Student, StudentClassEnrollment } from '../lib/supabase';
 
 export interface CreateStudentData {
   firstName: string;
@@ -27,12 +27,17 @@ export interface CreateStudentData {
   emergencyContactName: string;
   emergencyContactPhone: string;
   emergencyContactRelation: string;
-  classId: string;
   enrollmentDate: string;
-  totalFees: number;
-  initialPayment: number;
   transportMode: string;
   notes?: string;
+}
+
+export interface EnrollStudentData {
+  studentId: string;
+  classId: string;
+  academicYearId: string;
+  totalFees: number;
+  initialPayment?: number;
 }
 
 export const studentService = {
@@ -42,10 +47,18 @@ export const studentService = {
       .from('students')
       .select(`
         *,
-        classes (
+        student_class_enrollments!inner (
           id,
-          name,
-          levels (name)
+          total_fees,
+          paid_amount,
+          outstanding_amount,
+          payment_status,
+          status,
+          classes (
+            id,
+            name,
+            levels (name)
+          )
         )
       `)
       .order('last_name', { ascending: true });
@@ -60,11 +73,19 @@ export const studentService = {
       .from('students')
       .select(`
         *,
-        classes (
+        student_class_enrollments (
           id,
-          name,
-          levels (name),
-          teachers (first_name, last_name)
+          total_fees,
+          paid_amount,
+          outstanding_amount,
+          payment_status,
+          status,
+          classes (
+            id,
+            name,
+            levels (name),
+            teachers (first_name, last_name)
+          )
         ),
         payments (
           id,
@@ -112,11 +133,27 @@ export const studentService = {
         emergency_contact_name: studentData.emergencyContactName,
         emergency_contact_phone: studentData.emergencyContactPhone,
         emergency_contact_relation: studentData.emergencyContactRelation,
-        class_id: studentData.classId,
         enrollment_date: studentData.enrollmentDate,
-        total_fees: studentData.totalFees,
-        paid_amount: studentData.initialPayment,
         transport_mode: studentData.transportMode
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Inscrire un élève à une classe
+  async enrollStudent(enrollmentData: EnrollStudentData) {
+    const { data, error } = await supabase
+      .from('student_class_enrollments')
+      .insert({
+        student_id: enrollmentData.studentId,
+        class_id: enrollmentData.classId,
+        academic_year_id: enrollmentData.academicYearId,
+        total_fees: enrollmentData.totalFees,
+        paid_amount: enrollmentData.initialPayment || 0,
+        enrollment_date: new Date().toISOString().split('T')[0]
       })
       .select()
       .single();
@@ -124,15 +161,16 @@ export const studentService = {
     if (error) throw error;
 
     // Si paiement initial, créer l'enregistrement de paiement
-    if (studentData.initialPayment > 0) {
+    if (enrollmentData.initialPayment && enrollmentData.initialPayment > 0) {
       await supabase
         .from('payments')
         .insert({
-          student_id: data.id,
-          amount: studentData.initialPayment,
-          payment_method: 'Espèces', // Valeur par défaut, à adapter selon vos besoins
+          student_id: enrollmentData.studentId,
+          enrollment_id: data.id,
+          amount: enrollmentData.initialPayment,
+          payment_method: 'Espèces',
           payment_type: 'Inscription',
-          payment_date: studentData.enrollmentDate,
+          payment_date: new Date().toISOString().split('T')[0],
           period_description: 'Paiement d\'inscription',
           processed_by: (await supabase.auth.getUser()).data.user?.id
         });
@@ -167,14 +205,18 @@ export const studentService = {
   // Récupérer les élèves par classe
   async getStudentsByClass(classId: string) {
     const { data, error } = await supabase
-      .from('students')
+      .from('student_class_enrollments')
       .select(`
-        *,
-        classes (name, levels (name))
+        students (*),
+        classes (name, levels (name)),
+        total_fees,
+        paid_amount,
+        outstanding_amount,
+        payment_status,
+        status
       `)
       .eq('class_id', classId)
-      .eq('status', 'Actif')
-      .order('last_name', { ascending: true });
+      .eq('status', 'Actif');
 
     if (error) throw error;
     return data;
@@ -186,7 +228,11 @@ export const studentService = {
       .from('students')
       .select(`
         *,
-        classes (name, levels (name))
+        student_class_enrollments (
+          classes (name, levels (name)),
+          payment_status,
+          outstanding_amount
+        )
       `)
       .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,parent_email.ilike.%${searchTerm}%`)
       .order('last_name', { ascending: true });
@@ -197,27 +243,33 @@ export const studentService = {
 
   // Statistiques des élèves
   async getStudentStats() {
-    const { data: totalStudents, error: totalError } = await supabase
-      .from('students')
-      .select('id', { count: 'exact' })
-      .eq('status', 'Actif');
-
-    const { data: paymentStats, error: paymentError } = await supabase
-      .from('students')
+    const { data: enrollments, error: enrollmentError } = await supabase
+      .from('student_class_enrollments')
       .select('payment_status')
       .eq('status', 'Actif');
 
-    if (totalError || paymentError) {
-      throw totalError || paymentError;
+    if (enrollmentError) {
+      throw enrollmentError;
     }
 
     const stats = {
-      total: totalStudents?.length || 0,
-      upToDate: paymentStats?.filter(s => s.payment_status === 'À jour').length || 0,
-      late: paymentStats?.filter(s => s.payment_status === 'En retard').length || 0,
-      partial: paymentStats?.filter(s => s.payment_status === 'Partiel').length || 0
+      total: enrollments?.length || 0,
+      upToDate: enrollments?.filter(s => s.payment_status === 'À jour').length || 0,
+      late: enrollments?.filter(s => s.payment_status === 'En retard').length || 0,
+      partial: enrollments?.filter(s => s.payment_status === 'Partiel').length || 0
     };
 
     return stats;
+  },
+
+  // Transférer un élève vers une autre classe
+  async transferStudent(enrollmentId: string, newClassId: string) {
+    const { data, error } = await supabase.rpc('transfer_student', {
+      enrollment_id: enrollmentId,
+      new_class_id: newClassId
+    });
+
+    if (error) throw error;
+    return data;
   }
 };

@@ -13,7 +13,7 @@ export interface CreateTeacherData {
   salary: number;
   emergencyContact: string;
   specializations: string[];
-  assignedClass?: string;
+  schoolId?: string;
 }
 
 export const teacherService = {
@@ -27,6 +27,11 @@ export const teacherService = {
           id,
           name,
           levels (name)
+        ),
+        school_teachers (
+          schools (name),
+          status,
+          contract_type
         )
       `)
       .order('last_name', { ascending: true });
@@ -45,7 +50,9 @@ export const teacherService = {
           id,
           name,
           levels (name),
-          students (id, first_name, last_name)
+          student_class_enrollments (
+            students (id, first_name, last_name)
+          )
         )
       `)
       .eq('id', id)
@@ -77,6 +84,19 @@ export const teacherService = {
       .single();
 
     if (error) throw error;
+
+    // Si une école est spécifiée, créer la relation école-enseignant
+    if (teacherData.schoolId && data) {
+      await supabase
+        .from('school_teachers')
+        .insert({
+          school_id: teacherData.schoolId,
+          teacher_id: data.id,
+          start_date: teacherData.hireDate,
+          status: 'Actif'
+        });
+    }
+
     return data;
   },
 
@@ -107,9 +127,12 @@ export const teacherService = {
   async getAvailableTeachers() {
     const { data, error } = await supabase
       .from('teachers')
-      .select('*')
+      .select(`
+        *,
+        classes (id)
+      `)
       .eq('status', 'Actif')
-      .is('classes.teacher_id', null);
+      .filter('classes', 'is', null);
 
     if (error) throw error;
     return data;

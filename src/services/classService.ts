@@ -4,6 +4,7 @@ import type { Class } from '../lib/supabase';
 export interface CreateClassData {
   name: string;
   levelId: string;
+  schoolId: string;
   teacherId?: string;
   capacity: number;
   classroom?: string;
@@ -29,7 +30,10 @@ export const classService = {
           email,
           phone
         ),
-        students (id),
+        student_class_enrollments (
+          id,
+          students (id)
+        ),
         academic_years (name)
       `)
       .eq('status', 'Actif')
@@ -40,7 +44,7 @@ export const classService = {
     // Transformer les données pour correspondre au format attendu
     return data?.map(cls => ({
       ...cls,
-      student_count: cls.students?.length || 0,
+      student_count: cls.student_class_enrollments?.length || 0,
       level_name: cls.levels?.name || '',
       teacher_name: cls.teachers ? `${cls.teachers.first_name} ${cls.teachers.last_name}` : 'Non assigné',
       subjects: [] // À récupérer séparément si nécessaire
@@ -71,17 +75,22 @@ export const classService = {
           qualification,
           experience
         ),
-        students (
+        student_class_enrollments (
           id,
-          first_name,
-          last_name,
-          gender,
-          date_of_birth,
-          parent_email,
-          father_phone,
-          mother_phone,
+          total_fees,
+          paid_amount,
+          outstanding_amount,
           payment_status,
-          outstanding_amount
+          students (
+            id,
+            first_name,
+            last_name,
+            gender,
+            date_of_birth,
+            parent_email,
+            father_phone,
+            mother_phone
+          )
         ),
         academic_years (name)
       `)
@@ -106,6 +115,7 @@ export const classService = {
       .insert({
         name: classData.name,
         level_id: classData.levelId,
+        school_id: classData.schoolId,
         teacher_id: classData.teacherId,
         capacity: classData.capacity,
         classroom: classData.classroom,
@@ -169,7 +179,7 @@ export const classService = {
       .select(`
         *,
         levels (name),
-        students (id)
+        student_class_enrollments (id)
       `)
       .is('teacher_id', null)
       .eq('status', 'Actif');
@@ -184,7 +194,7 @@ export const classService = {
       .from('classes')
       .select(`
         *,
-        students (id),
+        student_class_enrollments (id),
         teachers (id)
       `)
       .eq('status', 'Actif');
@@ -195,9 +205,9 @@ export const classService = {
       total: classes?.length || 0,
       withTeacher: classes?.filter(c => c.teachers).length || 0,
       withoutTeacher: classes?.filter(c => !c.teachers).length || 0,
-      totalStudents: classes?.reduce((sum, c) => sum + (c.students?.length || 0), 0) || 0,
+      totalStudents: classes?.reduce((sum, c) => sum + (c.student_class_enrollments?.length || 0), 0) || 0,
       averageSize: classes?.length ? 
-        (classes.reduce((sum, c) => sum + (c.students?.length || 0), 0) / classes.length) : 0
+        (classes.reduce((sum, c) => sum + (c.student_class_enrollments?.length || 0), 0) / classes.length) : 0
     };
 
     return stats;

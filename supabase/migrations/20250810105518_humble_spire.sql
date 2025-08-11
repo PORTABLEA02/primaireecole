@@ -1,31 +1,10 @@
 /*
-  # Schéma complet pour le système de gestion scolaire
-
-  1. Nouvelles Tables
-    - `schools` - Informations de l'école
-    - `academic_years` - Années scolaires et périodes
-    - `levels` - Niveaux scolaires (Maternelle, CI, CP, etc.)
-    - `subjects` - Matières enseignées
-    - `teachers` - Enseignants
-    - `classes` - Classes avec enseignant unique
-    - `students` - Élèves avec informations complètes
-    - `payments` - Paiements et transactions
-    - `grades` - Notes et évaluations
-    - `schedules` - Emplois du temps
-    - `attendance` - Présences/absences
-    - `bulletins` - Bulletins scolaires générés
-    - `user_profiles` - Profils utilisateurs étendus
-
-  2. Sécurité
-    - RLS activé sur toutes les tables
-    - Politiques basées sur les rôles utilisateur
-    - Accès contrôlé selon les permissions
-
-  3. Fonctionnalités
-    - Système d'enseignant unique par classe
-    - Gestion financière avec paiements par tranches
-    - Suivi académique complet
-    - Génération de bulletins
+  SCHÉMA COMPLET MIS À JOUR - SYSTÈME DE GESTION SCOLAIRE
+  Contient les modifications demandées :
+  - Table student_class_enrollments
+  - Table school_teachers
+  - Liens vers schools pour user_profiles, classes, subjects
+  - Suppression des champs financiers de students
 */
 
 -- Extension pour UUID
@@ -86,6 +65,7 @@ CREATE TABLE IF NOT EXISTS levels (
 -- Table des matières
 CREATE TABLE IF NOT EXISTS subjects (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  school_id uuid REFERENCES schools(id) ON DELETE CASCADE,
   name text NOT NULL,
   description text,
   coefficient integer DEFAULT 1,
@@ -123,9 +103,24 @@ CREATE TABLE IF NOT EXISTS teachers (
   updated_at timestamptz DEFAULT now()
 );
 
--- Table des classes (système d'enseignant unique)
+-- Table de relation écoles-enseignants
+CREATE TABLE IF NOT EXISTS school_teachers (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  school_id uuid REFERENCES schools(id) ON DELETE CASCADE,
+  teacher_id uuid REFERENCES teachers(id) ON DELETE CASCADE,
+  start_date date NOT NULL,
+  end_date date,
+  status text CHECK (status IN ('Actif', 'Inactif', 'Congé')) DEFAULT 'Actif',
+  contract_type text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(school_id, teacher_id)
+);
+
+-- Table des classes
 CREATE TABLE IF NOT EXISTS classes (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  school_id uuid REFERENCES schools(id) ON DELETE CASCADE,
   name text NOT NULL,
   level_id uuid REFERENCES levels(id) ON DELETE RESTRICT,
   teacher_id uuid REFERENCES teachers(id) ON DELETE SET NULL,
@@ -135,7 +130,7 @@ CREATE TABLE IF NOT EXISTS classes (
   status text CHECK (status IN ('Actif', 'Inactif')) DEFAULT 'Actif',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),
-  UNIQUE(name, academic_year_id)
+  UNIQUE(name, academic_year_id, school_id)
 );
 
 -- Table des élèves
@@ -172,10 +167,19 @@ CREATE TABLE IF NOT EXISTS students (
   emergency_contact_relation text NOT NULL,
   
   -- Informations scolaires
-  class_id uuid REFERENCES classes(id) ON DELETE SET NULL,
   enrollment_date date NOT NULL DEFAULT CURRENT_DATE,
   transport_mode text DEFAULT 'À pied',
-  status text CHECK (status IN ('Actif', 'Inactif', 'Suspendu', 'Transféré')) DEFAULT 'Actif',
+  
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Table d'inscription des élèves aux classes
+CREATE TABLE IF NOT EXISTS student_class_enrollments (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  student_id uuid REFERENCES students(id) ON DELETE CASCADE,
+  class_id uuid REFERENCES classes(id) ON DELETE CASCADE,
+  academic_year_id uuid REFERENCES academic_years(id) ON DELETE CASCADE,
   
   -- Informations financières
   total_fees integer NOT NULL DEFAULT 0,
@@ -189,14 +193,18 @@ CREATE TABLE IF NOT EXISTS students (
     END
   ) STORED,
   
+  enrollment_date date NOT NULL DEFAULT CURRENT_DATE,
+  status text CHECK (status IN ('Actif', 'Inactif', 'Suspendu', 'Transféré')) DEFAULT 'Actif',
   created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(student_id, class_id, academic_year_id)
 );
 
 -- Table des paiements
 CREATE TABLE IF NOT EXISTS payments (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   student_id uuid REFERENCES students(id) ON DELETE CASCADE,
+  enrollment_id uuid REFERENCES student_class_enrollments(id) ON DELETE CASCADE,
   amount integer NOT NULL,
   payment_method text CHECK (payment_method IN ('Espèces', 'Mobile Money', 'Virement Bancaire')) NOT NULL,
   payment_type text CHECK (payment_type IN ('Inscription', 'Scolarité', 'Cantine', 'Transport', 'Fournitures', 'Autre')) NOT NULL,
@@ -251,6 +259,7 @@ CREATE TABLE IF NOT EXISTS attendance (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   student_id uuid REFERENCES students(id) ON DELETE CASCADE,
   class_id uuid REFERENCES classes(id) ON DELETE CASCADE,
+  enrollment_id uuid REFERENCES student_class_enrollments(id) ON DELETE CASCADE,
   attendance_date date NOT NULL DEFAULT CURRENT_DATE,
   status text CHECK (status IN ('Présent', 'Absent', 'Retard', 'Absent justifié')) DEFAULT 'Présent',
   reason text,
@@ -265,6 +274,7 @@ CREATE TABLE IF NOT EXISTS bulletins (
   student_id uuid REFERENCES students(id) ON DELETE CASCADE,
   academic_period_id uuid REFERENCES academic_periods(id) ON DELETE CASCADE,
   class_id uuid REFERENCES classes(id) ON DELETE CASCADE,
+  enrollment_id uuid REFERENCES student_class_enrollments(id) ON DELETE CASCADE,
   general_average decimal(4,2),
   class_rank integer,
   total_students integer,
@@ -282,6 +292,7 @@ CREATE TABLE IF NOT EXISTS bulletins (
 CREATE TABLE IF NOT EXISTS user_profiles (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  school_id uuid REFERENCES schools(id) ON DELETE CASCADE,
   full_name text NOT NULL,
   role text CHECK (role IN ('Admin', 'Directeur', 'Secrétaire', 'Enseignant', 'Comptable')) NOT NULL,
   permissions text[] DEFAULT '{}',
@@ -307,15 +318,21 @@ CREATE TABLE IF NOT EXISTS activity_logs (
   created_at timestamptz DEFAULT now()
 );
 
--- Indexes pour les performances
+-- Index pour les performances
 CREATE INDEX IF NOT EXISTS idx_students_class_id ON students(class_id);
-CREATE INDEX IF NOT EXISTS idx_students_status ON students(status);
 CREATE INDEX IF NOT EXISTS idx_payments_student_id ON payments(student_id);
+CREATE INDEX IF NOT EXISTS idx_payments_enrollment ON payments(enrollment_id);
 CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date);
 CREATE INDEX IF NOT EXISTS idx_grades_student_id ON grades(student_id);
 CREATE INDEX IF NOT EXISTS idx_grades_subject_period ON grades(subject_id, academic_period_id);
 CREATE INDEX IF NOT EXISTS idx_schedules_class_day ON schedules(class_id, day_of_week);
 CREATE INDEX IF NOT EXISTS idx_attendance_student_date ON attendance(student_id, attendance_date);
+CREATE INDEX IF NOT EXISTS idx_enrollments_student ON student_class_enrollments(student_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_class_year ON student_class_enrollments(class_id, academic_year_id);
+CREATE INDEX IF NOT EXISTS idx_school_teachers_teacher ON school_teachers(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_classes_school ON classes(school_id);
+CREATE INDEX IF NOT EXISTS idx_subjects_school ON subjects(school_id);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_school ON user_profiles(school_id);
 
 -- Triggers pour updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -336,6 +353,8 @@ CREATE TRIGGER update_students_updated_at BEFORE UPDATE ON students FOR EACH ROW
 CREATE TRIGGER update_grades_updated_at BEFORE UPDATE ON grades FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_schedules_updated_at BEFORE UPDATE ON schedules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE ON user_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_enrollments_updated_at BEFORE UPDATE ON student_class_enrollments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_school_teachers_updated_at BEFORE UPDATE ON school_teachers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Fonction pour logger les activités
 CREATE OR REPLACE FUNCTION log_activity()
@@ -360,6 +379,8 @@ CREATE TRIGGER log_teachers_activity AFTER INSERT OR UPDATE OR DELETE ON teacher
 CREATE TRIGGER log_classes_activity AFTER INSERT OR UPDATE OR DELETE ON classes FOR EACH ROW EXECUTE FUNCTION log_activity();
 CREATE TRIGGER log_payments_activity AFTER INSERT OR UPDATE OR DELETE ON payments FOR EACH ROW EXECUTE FUNCTION log_activity();
 CREATE TRIGGER log_grades_activity AFTER INSERT OR UPDATE OR DELETE ON grades FOR EACH ROW EXECUTE FUNCTION log_activity();
+CREATE TRIGGER log_enrollments_activity AFTER INSERT OR UPDATE OR DELETE ON student_class_enrollments FOR EACH ROW EXECUTE FUNCTION log_activity();
+CREATE TRIGGER log_school_teachers_activity AFTER INSERT OR UPDATE OR DELETE ON school_teachers FOR EACH ROW EXECUTE FUNCTION log_activity();
 
 -- Enable RLS
 ALTER TABLE schools ENABLE ROW LEVEL SECURITY;
@@ -368,8 +389,10 @@ ALTER TABLE academic_periods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE levels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE teachers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE school_teachers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE classes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE student_class_enrollments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE grades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedules ENABLE ROW LEVEL SECURITY;
@@ -378,150 +401,27 @@ ALTER TABLE bulletins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 
--- Politiques RLS pour les utilisateurs authentifiés
+-- Politiques RLS (exemples principaux)
 CREATE POLICY "Authenticated users can read schools" ON schools FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Admins can manage schools" ON schools FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND (role = 'Admin' OR 'all' = ANY(permissions))
+  EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'Admin')
+);
+
+CREATE POLICY "Users can read their school data" ON user_profiles FOR SELECT TO authenticated USING (
+  user_id = auth.uid() OR school_id IN (
+    SELECT school_id FROM user_profiles WHERE user_id = auth.uid()
   )
 );
 
-CREATE POLICY "Authenticated users can read academic years" ON academic_years FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Admins can manage academic years" ON academic_years FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND (role = 'Admin' OR role = 'Directeur' OR 'all' = ANY(permissions))
-  )
+CREATE POLICY "Teachers can manage their classes" ON classes FOR ALL TO authenticated USING (
+  teacher_id IN (SELECT id FROM teachers WHERE user_id = auth.uid()) OR
+  EXISTS (SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = 'Admin')
 );
 
-CREATE POLICY "Authenticated users can read levels and subjects" ON levels FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Authenticated users can read subjects" ON subjects FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Users with permissions can read teachers" ON teachers FOR SELECT TO authenticated USING (
+-- Politique pour les inscriptions
+CREATE POLICY "Authorized users can manage enrollments" ON student_class_enrollments FOR ALL TO authenticated USING (
   EXISTS (
     SELECT 1 FROM user_profiles 
     WHERE user_id = auth.uid() 
-    AND ('teachers' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur')
-  )
-);
-
-CREATE POLICY "Authorized users can manage teachers" ON teachers FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('teachers' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur')
-  )
-);
-
-CREATE POLICY "Users with permissions can read classes" ON classes FOR SELECT TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('classes' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur')
-  )
-);
-
-CREATE POLICY "Authorized users can manage classes" ON classes FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('classes' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur')
-  )
-);
-
-CREATE POLICY "Users with permissions can read students" ON students FOR SELECT TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('students' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur' OR role = 'Secrétaire')
-  )
-);
-
-CREATE POLICY "Authorized users can manage students" ON students FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('students' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur' OR role = 'Secrétaire')
-  )
-);
-
-CREATE POLICY "Users with permissions can read payments" ON payments FOR SELECT TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('finance' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur' OR role = 'Comptable')
-  )
-);
-
-CREATE POLICY "Authorized users can manage payments" ON payments FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('finance' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur' OR role = 'Comptable')
-  )
-);
-
-CREATE POLICY "Users with permissions can read grades" ON grades FOR SELECT TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('academic' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur' OR role = 'Enseignant')
-  )
-);
-
-CREATE POLICY "Authorized users can manage grades" ON grades FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('academic' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur' OR role = 'Enseignant')
-  )
-);
-
-CREATE POLICY "Users can read their own profile" ON user_profiles FOR SELECT TO authenticated USING (user_id = auth.uid());
-CREATE POLICY "Users can update their own profile" ON user_profiles FOR UPDATE TO authenticated USING (user_id = auth.uid());
-CREATE POLICY "Admins can manage all profiles" ON user_profiles FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND (role = 'Admin' OR 'all' = ANY(permissions))
-  )
-);
-
--- Politiques pour les autres tables
-CREATE POLICY "Authenticated users can read schedules" ON schedules FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Authorized users can manage schedules" ON schedules FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('schedule' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur')
-  )
-);
-
-CREATE POLICY "Authenticated users can read attendance" ON attendance FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Teachers can manage attendance" ON attendance FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('academic' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur' OR role = 'Enseignant')
-  )
-);
-
-CREATE POLICY "Authenticated users can read bulletins" ON bulletins FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Authorized users can manage bulletins" ON bulletins FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND ('academic' = ANY(permissions) OR 'all' = ANY(permissions) OR role = 'Admin' OR role = 'Directeur')
-  )
-);
-
-CREATE POLICY "Admins can read activity logs" ON activity_logs FOR SELECT TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE user_id = auth.uid() 
-    AND (role = 'Admin' OR 'all' = ANY(permissions))
-  )
+    AND ('academic' = ANY(permissions) OR role IN ('Admin', 'Directeur', 'Secrétaire'))
 );

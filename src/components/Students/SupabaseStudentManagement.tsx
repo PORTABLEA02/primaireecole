@@ -60,13 +60,7 @@ const SupabaseStudentManagement: React.FC = () => {
 
   const handleAddStudent = async (studentData: any) => {
     try {
-      // Trouver le niveau correspondant à la classe
-      const level = levels.find(l => l.name === studentData.level);
-      if (!level) {
-        throw new Error('Niveau non trouvé');
-      }
-
-      // Créer l'élève avec les données adaptées
+      // Créer l'élève
       const newStudentData = {
         firstName: studentData.firstName,
         lastName: studentData.lastName,
@@ -93,15 +87,34 @@ const SupabaseStudentManagement: React.FC = () => {
         emergencyContactName: studentData.emergencyContactName,
         emergencyContactPhone: studentData.emergencyContactPhone,
         emergencyContactRelation: studentData.emergencyContactRelation,
-        classId: studentData.classId, // À adapter selon votre logique de classe
         enrollmentDate: studentData.enrollmentDate,
-        totalFees: studentData.totalFees,
-        initialPayment: studentData.initialPayment,
         transportMode: studentData.transportMode,
         notes: studentData.notes
       };
 
-      await studentService.createStudent(newStudentData);
+      const student = await studentService.createStudent(newStudentData);
+      
+      // Créer l'inscription à la classe
+      if (student && studentData.classId) {
+        // Récupérer l'année scolaire active
+        const { data: activeYear } = await supabase
+          .from('academic_years')
+          .select('id')
+          .eq('is_active', true)
+          .single();
+
+        if (activeYear) {
+          await enrollmentService.createEnrollment({
+            studentId: student.id,
+            classId: studentData.classId,
+            academicYearId: activeYear.id,
+            totalFees: studentData.totalFees,
+            initialPayment: studentData.initialPayment,
+            enrollmentDate: studentData.enrollmentDate
+          });
+        }
+      }
+      
       await loadData(); // Recharger les données
     } catch (error) {
       console.error('Erreur lors de l\'ajout de l\'élève:', error);
@@ -126,7 +139,7 @@ const SupabaseStudentManagement: React.FC = () => {
                          student.father_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.mother_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.parent_email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClass = classFilter === 'all' || student.classes?.name === classFilter;
+    const matchesClass = classFilter === 'all' || student.student_class_enrollments?.[0]?.classes?.name === classFilter;
     const matchesStatus = statusFilter === 'all' || student.status === statusFilter;
     return matchesSearch && matchesClass && matchesStatus;
   });
@@ -262,7 +275,7 @@ const SupabaseStudentManagement: React.FC = () => {
             className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">Toutes les classes</option>
-            {Array.from(new Set(students.map(s => s.classes?.name).filter(Boolean))).map(className => (
+            {Array.from(new Set(students.map(s => s.student_class_enrollments?.[0]?.classes?.name).filter(Boolean))).map(className => (
               <option key={className} value={className}>{className}</option>
             ))}
           </select>
@@ -324,7 +337,7 @@ const SupabaseStudentManagement: React.FC = () => {
                   
                   <td className="px-6 py-4">
                     <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
-                      {student.classes?.name || 'Non assigné'}
+                      {student.student_class_enrollments?.[0]?.classes?.name || 'Non assigné'}
                     </span>
                   </td>
                   
@@ -351,16 +364,16 @@ const SupabaseStudentManagement: React.FC = () => {
                   
                   <td className="px-6 py-4">
                     <div className="space-y-2">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPaymentStatusColor(student.payment_status)}`}>
-                        {student.payment_status}
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPaymentStatusColor(student.student_class_enrollments?.[0]?.payment_status)}`}>
+                        {student.student_class_enrollments?.[0]?.payment_status || 'Non défini'}
                       </span>
                       <div className="text-sm text-gray-600">
-                        {(student.paid_amount || 0).toLocaleString()}/{student.total_fees.toLocaleString()} FCFA
+                        {(student.student_class_enrollments?.[0]?.paid_amount || 0).toLocaleString()}/{(student.student_class_enrollments?.[0]?.total_fees || 0).toLocaleString()} FCFA
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-1">
                         <div 
                           className="bg-green-600 h-1 rounded-full"
-                          style={{ width: `${((student.paid_amount || 0) / student.total_fees) * 100}%` }}
+                          style={{ width: `${((student.student_class_enrollments?.[0]?.paid_amount || 0) / (student.student_class_enrollments?.[0]?.total_fees || 1)) * 100}%` }}
                         ></div>
                       </div>
                     </div>
@@ -446,6 +459,10 @@ const SupabaseStudentManagement: React.FC = () => {
                     <p><strong>Langue maternelle:</strong> {selectedStudent.mother_tongue}</p>
                     {selectedStudent.religion && <p><strong>Religion:</strong> {selectedStudent.religion}</p>}
                     {selectedStudent.blood_type && <p><strong>Groupe sanguin:</strong> {selectedStudent.blood_type}</p>}
+                    <p><strong>Transport:</strong> {selectedStudent.transport_mode}</p>
+                    {selectedStudent.number_of_siblings > 0 && (
+                      <p><strong>Frères/Sœurs:</strong> {selectedStudent.number_of_siblings}</p>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -462,6 +479,23 @@ const SupabaseStudentManagement: React.FC = () => {
                     <p><strong>Adresse:</strong> {selectedStudent.address}</p>
                     <p><strong>Contact d'urgence:</strong> {selectedStudent.emergency_contact_name} ({selectedStudent.emergency_contact_relation})</p>
                   </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3">Inscription Actuelle</h3>
+                  {selectedStudent.student_class_enrollments?.[0] && (
+                    <div className="space-y-2 text-sm">
+                      <p><strong>Classe:</strong> {selectedStudent.student_class_enrollments[0].classes?.name}</p>
+                      <p><strong>Statut:</strong> {selectedStudent.student_class_enrollments[0].status}</p>
+                      <p><strong>Frais totaux:</strong> {selectedStudent.student_class_enrollments[0].total_fees?.toLocaleString()} FCFA</p>
+                      <p><strong>Montant payé:</strong> {selectedStudent.student_class_enrollments[0].paid_amount?.toLocaleString()} FCFA</p>
+                      <p><strong>Reste à payer:</strong> {selectedStudent.student_class_enrollments[0].outstanding_amount?.toLocaleString()} FCFA</p>
+                      <p><strong>Statut paiement:</strong> 
+                        <span className={`ml-2 px-2 py-1 rounded text-xs ${getPaymentStatusColor(selectedStudent.student_class_enrollments[0].payment_status)}`}>
+                          {selectedStudent.student_class_enrollments[0].payment_status}
+                        </span>
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
