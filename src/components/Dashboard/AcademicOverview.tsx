@@ -1,47 +1,38 @@
 import React from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
-interface AcademicOverviewProps {
-  academicData?: Array<{
-    level: string;
-    students: number;
-    classes: number;
-    trend: 'up' | 'down';
-    percentage: number;
-  }>;
-}
+const academicData = [
+  {
+    level: 'Maternelle',
+    students: 180,
+    classes: 8,
+    trend: 'up',
+    percentage: 5.2
+  },
+  {
+    level: 'Primaire CI-CP',
+    students: 240,
+    classes: 10,
+    trend: 'up',
+    percentage: 8.1
+  },
+  {
+    level: 'Primaire CE1-CE2',
+    students: 320,
+    classes: 12,
+    trend: 'up',
+    percentage: 3.4
+  },
+  {
+    level: 'Primaire CM1-CM2',
+    students: 285,
+    classes: 12,
+    trend: 'down',
+    percentage: -2.1
+  }
+];
 
-const AcademicOverview: React.FC<AcademicOverviewProps> = ({ academicData }) => {
-  const defaultAcademicData = [
-    {
-      level: 'Maternelle',
-      students: 180,
-      classes: 8,
-      trend: 'up' as const,
-      percentage: 5.2
-    },
-    {
-      level: 'Primaire CI-CP',
-      students: 240,
-      classes: 10,
-      trend: 'up' as const,
-      percentage: 8.1
-    },
-    {
-      level: 'Primaire CE1-CE2',
-      students: 320,
-      classes: 12,
-      trend: 'up' as const,
-      percentage: 3.4
-    },
-    {
-      level: 'Primaire CM1-CM2',
-      students: 285,
-      classes: 12,
-      trend: 'down' as const,
-      percentage: -2.1
-    }
-  ];
+const AcademicOverview: React.FC = () => {
   return (
     <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
       <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">Répartition Académique</h2>
@@ -57,7 +48,7 @@ const AcademicOverview: React.FC<AcademicOverviewProps> = ({ academicData }) => 
             </tr>
           </thead>
           <tbody>
-            {data.map((level, index) => (
+            {academicData.map((level, index) => (
               <tr key={index} className="hover:bg-gray-50 transition-colors">
                 <td className="py-3 sm:py-4 px-1 sm:px-2">
                   <span className="text-sm sm:text-base font-medium text-gray-800">{level.level}</span>
@@ -90,7 +81,5 @@ const AcademicOverview: React.FC<AcademicOverviewProps> = ({ academicData }) => 
     </div>
   );
 };
-
-  const data = academicData || defaultAcademicData;
 
 export default AcademicOverview;

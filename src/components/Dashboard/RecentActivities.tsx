@@ -1,60 +1,50 @@
 import React from 'react';
 import { Clock, Users, DollarSign, BookOpen, AlertCircle } from 'lucide-react';
 
-interface RecentActivitiesProps {
-  activities?: Array<{
-    id: string;
-    type: string;
-    title: string;
-    description: string;
-    time: string;
-    user?: string;
-  }>;
-}
+const activities = [
+  {
+    type: 'inscription',
+    title: 'Nouvelle inscription',
+    description: 'Kofi Mensah inscrit en CM2A',
+    time: 'Il y a 2 heures',
+    icon: Users,
+    color: 'blue'
+  },
+  {
+    type: 'paiement',
+    title: 'Paiement reçu',
+    description: '1ère Tranche - Fatima Diallo (CE1B) - 150,000 FCFA',
+    time: 'Il y a 3 heures',
+    icon: DollarSign,
+    color: 'green'
+  },
+  {
+    type: 'notes',
+    title: 'Notes saisies',
+    description: 'Mathématiques - CM1A (32 élèves) par M. Traore',
+    time: 'Il y a 5 heures',
+    icon: BookOpen,
+    color: 'purple'
+  },
+  {
+    type: 'alerte',
+    title: 'Paiement en retard',
+    description: '1ère Tranche - Amadou Kone (CP2)',
+    time: 'Il y a 1 jour',
+    icon: AlertCircle,
+    color: 'orange'
+  },
+  {
+    type: 'inscription',
+    title: 'Transfert d\'élève',
+    description: 'Aissata Ba transférée de CE2A vers CE2B',
+    time: 'Il y a 2 jours',
+    icon: Users,
+    color: 'blue'
+  }
+];
 
-const RecentActivities: React.FC<RecentActivitiesProps> = ({ activities }) => {
-  const defaultActivities = [
-    {
-      id: '1',
-      type: 'inscription',
-      title: 'Nouvelle inscription',
-      description: 'Kofi Mensah inscrit en CM2A',
-      time: 'Il y a 2 heures',
-      user: 'Mme Keita'
-    },
-    {
-      id: '2',
-      type: 'paiement',
-      title: 'Paiement reçu',
-      description: '1ère Tranche - Fatima Diallo (CE1B) - 150,000 FCFA',
-      time: 'Il y a 3 heures',
-      user: 'M. Coulibaly'
-    },
-    {
-      id: '3',
-      type: 'notes',
-      title: 'Notes saisies',
-      description: 'Mathématiques - CM1A (32 élèves) par M. Traore',
-      time: 'Il y a 5 heures',
-      user: 'M. Traore'
-    }
-  ];
-
-  const data = activities || defaultActivities;
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'students':
-      case 'inscription': return Users;
-      case 'payments':
-      case 'paiement': return DollarSign;
-      case 'grades':
-      case 'notes': return BookOpen;
-      case 'alerte': return AlertCircle;
-      default: return Users;
-    }
-  };
-
+const RecentActivities: React.FC = () => {
   const getColorClasses = (color: string) => {
     const colorMap = {
       blue: 'bg-blue-50 text-blue-600',
@@ -75,15 +65,12 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ activities }) => {
       </div>
       
       <div className="space-y-4">
-        {data.map((activity, index) => {
-          const Icon = getIcon(activity.type);
-          const color = activity.type === 'paiement' ? 'green' : 
-                      activity.type === 'notes' ? 'purple' : 
-                      activity.type === 'alerte' ? 'orange' : 'blue';
+        {activities.map((activity, index) => {
+          const Icon = activity.icon;
           
           return (
-            <div key={activity.id} className="flex items-start space-x-3 sm:space-x-4 p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors">
-              <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${getColorClasses(color)}`}>
+            <div key={index} className="flex items-start space-x-3 sm:space-x-4 p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors">
+              <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${getColorClasses(activity.color)}`}>
                 <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
               </div>
               
