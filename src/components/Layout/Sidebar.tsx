@@ -2,6 +2,7 @@ import React from 'react';
 import { 
   Home, 
   Users, 
+  UserPlus,
   GraduationCap, 
   DollarSign, 
   BookOpen, 
@@ -23,6 +24,7 @@ interface SidebarProps {
 
 const menuItems = [
   { id: 'dashboard', label: 'Tableau de Bord', icon: Home },
+  { id: 'enrollment', label: 'Inscription', icon: UserPlus },
   { id: 'students', label: 'Élèves', icon: Users },
   { id: 'classes', label: 'Classes & Niveaux', icon: GraduationCap },
   { id: 'finance', label: 'Gestion Financière', icon: DollarSign },
@@ -44,6 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Filtrer les éléments du menu selon les permissions
   const filteredMenuItems = menuItems.filter(item => {
     if (item.id === 'dashboard') return true; // Dashboard accessible à tous
+    if (item.id === 'enrollment') return hasPermission('students');
     if (item.id === 'students') return hasPermission('students');
     if (item.id === 'classes') return hasPermission('classes');
     if (item.id === 'finance') return hasPermission('finance');

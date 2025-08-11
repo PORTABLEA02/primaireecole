@@ -12,6 +12,7 @@ import AcademicManagement from './components/Academic/AcademicManagement';
 import TeacherManagement from './components/Teachers/TeacherManagement';
 import Settings from './components/Settings/Settings';
 import ScheduleManagement from './components/Schedule/ScheduleManagement';
+import EnrollmentInterface from './components/Enrollment/EnrollmentInterface';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, login } = useAuth();
@@ -93,6 +94,12 @@ const AppContent: React.FC = () => {
         return (
           <ProtectedRoute requiredPermission="schedule">
             <ScheduleManagement />
+          </ProtectedRoute>
+        );
+      case 'enrollment':
+        return (
+          <ProtectedRoute requiredPermission="students">
+            <EnrollmentInterface />
           </ProtectedRoute>
         );
       default:

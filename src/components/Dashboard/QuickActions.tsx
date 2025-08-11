@@ -3,8 +3,8 @@ import { Plus, UserPlus, FileText, Calendar } from 'lucide-react';
 
 const quickActions = [
   {
-    title: 'Nouvel Élève',
-    description: 'Inscrire un nouvel élève',
+    title: 'Inscription',
+    description: 'Inscrire un élève',
     icon: UserPlus,
     color: 'blue'
   },
